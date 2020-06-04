@@ -1,0 +1,97 @@
+---
+title: "Análisis de temperatura y humedad"
+author: "Juan Pablo Jaramillo Castrillon"
+date: "3 de junio de 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+#Análisis de temperatura.
+
+Para la realización de una Prueba de Evaluación agronómica para cualquier tipo de cultivo se desea analizar muy bien el espacio o entorno donde se va a realizar la prueba, con el objetivo de conocer todas las variables posibles que pueden afectar el proceso. La temperatura y la humedad son variables que podrían influir significativamente cualquier proceso en el cultivo y para el desarrollo de dicha prueba. 
+
+La prueba se realiza dentro de un invernadero, esto con el fin de controlar estas variables, pero estas variables son afectadas por otros fenómenos, como lo son los días soleados, lluvias, granizadas, etc. 
+
+El tipo de invernadero y la ladera también son un factor que se debe tener en cuenta. Contamos con un invernadero situado en el corregimiento San José en el municipio de la Ceja Antioquia, este tiene cincuenta metros de largo y diez metros de ancho, se encuentra ubicado en una ladera con una pendiente que se desconoce, pero aparentemente se evidencia que es una ladera.
+
+El objetivo es encontrar evidencia de que tanto para la humedad y la temperatura puedan variar dentro del invernadero por la razón de que la temperatura se puede concentrar en el lugar más alto del invernadero y a su vez afectar la humedad o la altura del techo. Entonces podríamos encontrar diferencias de temperaturas en diferentes alturas.
+
+
+### ¿Que se necesita para ser este analisis? 
+
+Primero debemos contar con los materiales apropiados para dicho análisis, conocer las dimensiones y diseño del lugar.
+
+
+El invernadero está construido con guadua y plástico. todo su perímetro se encuentra encerrado por una cortina de plástico y una malla anti trips, el techo está construido a dos aguas con una apertura de ventilación a lo largo, el invernadero cuenta con dos divisiones, superior e inferior. En la parte superior su largo es de trece metros y su ancho de diez metros con una mayor pendiente, en la parte inferior con un largo de treinta siete metros y diez de ancho, esta con una pendiente menor que la parte inferior. 
+
+los materiales para utilizar son un higrómetro y un termómetro digitales ubicados en diferentes zonas del lugar donde se va acensar.
+
+
+###¿Como vamos analizar ? 
+
+Tomando registros del máximo y el mínimo de la temperatura en la noche y en el día, en periodos de veinticuatro horas al igual que la humedad. Estos datos serán recolectados por medio de una planilla donde se encuentra la fecha, la zona del invernadero, el máximo y el mínimo de la temperatura, humedad y el periodo (Diurno o Nocturno). Con estos datos y herramientas estadísticas podemos llegar a conclusiones que nos ayudaran a tomar decisiones por ejemplo al ordenar las unidades experimentales en bloques que podría ser en los distintas alturas.
+
+
+
+### Simulación: 
+
+Esta simulación es para la temperatura Diurna, los datos son pre establecidos para tener una idea de la vizualización.
+
+
+#### Grafico de serie de tiempo del promedio de la temperatura en el Dia
+```{r}
+library(gganimate)
+library(gifski)
+library(dplyr)
+library(ggplot2)
+temperatura <- read.csv(file ="../temperatura simulacion.csv",header = TRUE,sep = ";")
+names(temperatura) <- c("zona","TempD_min","TempD_max","TempN_min","TempN_max","Dias",
+                        "promedi_Dia","Promedio_noche")
+
+temperatura %>% group_by(Dias,zona) %>% summarise(promedi_Dia) %>%
+  ggplot(mapping = aes(x=Dias,y=log(promedi_Dia),color=zona))+
+  geom_line() + transition_reveal(Dias) 
+
+```
+
+En este grafico podemos observar las alteraciones de la temperatura durante cincuenta días, se distinguen tres colores representando la zona A,B y C. 
+
+
+#### Mapa de calor en las diferentes Zonas
+```{r}
+temperatura$L <- rep(1,nrow(temperatura))
+
+temperatura %>% group_by(Dias,zona,L) %>% select(promedi_Dia) %>%
+  ggplot(mapping = aes(x = L,y = zona))+
+  geom_tile(aes(fill=promedi_Dia))+
+  transition_states(Dias,transition_length = 10)
+
+
+```
+
+
+Esta grafica es una opción aunque se debe mejorar, muestra el cambio de temperatura en las tres zonas , en el lado izquierdo podemos observar una paleta de color azul mostrando que el color azul oscuro es la temperatura más fría y el azul claro la temperatura más caliente. Cada cambio de color representa cada día que pasa
+
+
+#### Diagramas de cajas y bigotes 
+```{r}
+mat <- rbind(c(1,2))
+layout(mat, widths = rep.int(1, ncol(mat)),
+       heights = rep.int(1, nrow(mat)), respect = FALSE)
+
+
+boxplot(temperatura$promedi_Dia~temperatura$zona,xlab = "Zonas",ylab = "Temperatura",main="Temperatura Diurna",las=1)
+grid()
+boxplot(temperatura$Promedio_noche~temperatura$zona,xlab = "Zonas",ylab = "Temperatura",main="Temperatura nocturna",las=1)
+grid()
+
+
+```
+
+Este grafico de cajas y lingotes nos muestra la variabilidad en cada zona, observamos que en la zona C se encuentra más variabilidad de la temperatura diurna y nocturna, la zona A y B nocturna muestran un comportamiento similar mientras que en la diurna todo lo contrario.
+
+
